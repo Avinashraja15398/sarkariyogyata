@@ -15,13 +15,11 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function CertificatePage({
   params,
 }: {
-  params: Promise<{ id: string }> | { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const resolvedParams = await params;
-  const attemptId = resolvedParams.id;
+  const { id: attemptId } = await params;
   const svc = serviceClient();
 
-  // 1. Active Supabase session se logged-in user check karein
   let loggedUser: any = null;
   try {
     const sc = await sessionClient();
@@ -29,7 +27,6 @@ export default async function CertificatePage({
     loggedUser = data?.user ?? null;
   } catch {}
 
-  // 2. Database se attempt details fetch karein (agar available ho)
   const { data: att } = await svc
     .from('quiz_attempts')
     .select('id, user_id, score, total, seconds, submitted_at')
@@ -39,7 +36,6 @@ export default async function CertificatePage({
   let name = '';
   let state = '';
 
-  // Case A: Agar attempt DB me hai aur quiz_players me entry hai
   if (att?.user_id) {
     const { data: player } = await svc
       .from('quiz_players')
@@ -51,7 +47,6 @@ export default async function CertificatePage({
     if (player?.state) state = player.state;
   }
 
-  // Case B: Agar attempt demo hai ya DB se naam nahi mila, toh logged-in user ka metadata use karein
   if (!name && loggedUser) {
     const meta = loggedUser.user_metadata || {};
     name =
@@ -61,7 +56,6 @@ export default async function CertificatePage({
     state = meta.state || '';
   }
 
-  // Fallback defaults agar koi user bina login ke check kare
   if (!name) name = 'Candidate';
   if (!state) state = 'India';
 
@@ -82,7 +76,6 @@ export default async function CertificatePage({
 
   return (
     <div className="min-h-screen bg-slate-900 py-10 px-4 print:p-0 print:bg-white flex flex-col items-center justify-center">
-      {/* Top Action Bar */}
       <div className="w-full max-w-4xl flex items-center justify-between pb-6 print:hidden">
         <Link className="text-sm font-bold text-slate-300 hover:text-white" href="/quiz">
           ← Back to Quiz
@@ -109,7 +102,6 @@ export default async function CertificatePage({
         </div>
       </div>
 
-      {/* Official Certificate Card */}
       <div className="relative w-full max-w-4xl bg-white text-slate-900 border-[12px] border-double border-amber-600 rounded-3xl p-8 sm:p-14 shadow-2xl print:shadow-none print:border-8 print:w-full">
         <div className="text-center relative z-10">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-black uppercase tracking-widest mb-3">
@@ -123,7 +115,6 @@ export default async function CertificatePage({
           </p>
         </div>
 
-        {/* Candidate Real Name & State */}
         <div className="text-center my-8 relative z-10">
           <div className="inline-block border-b-2 border-amber-500 pb-1 px-8">
             <h2 className="text-2xl sm:text-4xl font-extrabold text-blue-900 uppercase tracking-wide">
